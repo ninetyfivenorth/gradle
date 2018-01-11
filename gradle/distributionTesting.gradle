@@ -17,9 +17,8 @@
 import org.gradle.testing.DistributionTest
 import org.gradle.util.GradleVersion
 
-ext.distributionTestTasks = tasks.withType(DistributionTest)
+tasks.withType(DistributionTest) { DistributionTest task ->
 
-distributionTestTasks.all { DistributionTest task ->
     dependsOn ':toolingApi:toolingApiShadedJar'
     dependsOn ':cleanUpCaches'
     finalizedBy ':cleanUpDaemons'
