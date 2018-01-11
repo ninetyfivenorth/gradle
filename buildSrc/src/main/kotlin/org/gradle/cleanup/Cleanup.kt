@@ -59,3 +59,21 @@ fun Project.removeOldVersionsFromDir(dir: File, shouldDelete: Spec<GradleVersion
 }
 
 
+fun Project.removeCachedScripts(cachesDir: File) {
+
+    if (cachesDir.isDirectory) {
+
+        for (cacheDir in cachesDir.listFiles()) {
+            if (cacheDir.isDirectory) {
+                listOf("scripts", "scripts-remapped", "gradle-kotlin-dsl", "gradle-kotlin-dsl-accessors").forEach {
+                    val scriptsCacheDir = File(cacheDir, it)
+                    if (scriptsCacheDir.isDirectory) {
+                        println("Removing scripts cache directory : $scriptsCacheDir")
+                        delete(scriptsCacheDir)
+                    }
+                }
+            }
+        }
+    }
+}
+
