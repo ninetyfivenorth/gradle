@@ -149,32 +149,8 @@ def removeDaemonLogFiles(File dir) {
 /**
  * Removes state for versions that we're unlikely to ever need again, such as old snapshot versions.
  */
-def removeOldVersionsFromDir(File dir, shouldDelete, dirPrefix = "", dirSuffix = "") {
-    if (dir.directory) {
-
-        for (File cacheDir : dir.listFiles()) {
-            if (!cacheDir.name.startsWith(dirPrefix) || !cacheDir.name.endsWith(dirSuffix)) {
-                continue
-            }
-            def dirVersion = cacheDir.name.substring(dirPrefix.length(), cacheDir.name.length() - dirSuffix.length())
-            if (!dirVersion.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?")) {
-                continue
-            }
-
-            def cacheVersion
-            try {
-                cacheVersion = GradleVersion.version(dirVersion)
-            } catch (IllegalArgumentException e) {
-                // Ignore
-                continue
-            }
-
-            if (shouldDelete(cacheVersion)) {
-                println "Removing old cache directory : ${cacheDir}"
-                delete(cacheDir)
-            }
-        }
-    }
+def removeOldVersionsFromDir(File dir, Spec<GradleVersion> shouldDelete, dirPrefix = "", dirSuffix = "") {
+    org.gradle.cleanup.Cleanup.removeOldVersionsFromDir(project, dir, shouldDelete, dirPrefix, dirSuffix)
 }
 
 def removeCachedScripts(File cachesDir) {
@@ -206,13 +182,13 @@ project(":") {
             // Expire .gradle cache where major version is older than executing version
             def expireTaskCache = { candidateVersion ->
                 return candidateVersion.baseVersion < executingVersion.baseVersion
-            }
+            } as Spec<GradleVersion>
 
             // Expire intTestImage cache snapshots that are older than the tested version
             // Also expire version-specific cache snapshots when they can't be re-used (for 'snapshot-1' developer builds)
             def expireIntegTestCache = { candidateVersion ->
                 return (candidateVersion.snapshot && candidateVersion < GradleVersion.version(version)) || candidateVersion.version.endsWith('-snapshot-1')
-            }
+            } as Spec<GradleVersion>
 
             // Remove state for old versions of Gradle that we're unlikely to ever require again
             removeOldVersionsFromDir(file("buildSrc/.gradle"), expireTaskCache)

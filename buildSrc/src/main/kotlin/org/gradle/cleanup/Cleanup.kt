@@ -1,0 +1,61 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// To make it easier to access these functions from Groovy
+@file:JvmName("Cleanup")
+
+package org.gradle.cleanup
+
+import org.gradle.api.Project
+import org.gradle.api.specs.Spec
+import org.gradle.kotlin.dsl.invoke
+import org.gradle.util.GradleVersion
+
+import java.io.File
+
+/**
+ * Removes state for versions that we're unlikely to ever need again, such as old snapshot versions.
+ */
+fun Project.removeOldVersionsFromDir(dir: File, shouldDelete: Spec<GradleVersion>, dirPrefix: String = "", dirSuffix: String = "") {
+
+    if (dir.isDirectory) {
+
+        for (cacheDir in dir.listFiles()) {
+            if (!cacheDir.name.startsWith(dirPrefix) || !cacheDir.name.endsWith(dirSuffix)) {
+                continue
+            }
+            val dirVersion = cacheDir.name.substring(dirPrefix.length, cacheDir.name.length - dirSuffix.length)
+            if (!dirVersion.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?".toRegex())) {
+                continue
+            }
+
+            val cacheVersion =
+                try {
+                    GradleVersion.version(dirVersion)
+                } catch (e: IllegalArgumentException) {
+                    // Ignore
+                    continue
+                }
+
+            if (shouldDelete(cacheVersion)) {
+                println("Removing old cache directory : $cacheDir")
+                delete(cacheDir)
+            }
+        }
+    }
+}
+
+
