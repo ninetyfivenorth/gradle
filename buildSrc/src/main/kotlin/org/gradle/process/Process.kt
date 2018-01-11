@@ -13,13 +13,14 @@ import java.io.ByteArrayOutputStream
 fun Project.pkill(pid: String) {
     val killOutput = ByteArrayOutputStream()
     val result = exec {
-        // KTS: The ExecSpec properties in these block are red in IDEA due to
+        // KTS: ExecSpec members in this block are marked red in IDEA due to
         // https://github.com/gradle/kotlin-dsl/issues/476
-        commandLine = if (isWindows) {
-            listOf("taskkill.exe", "/F", "/T", "/PID", pid)
-        } else {
-            listOf("kill", pid)
-        }
+        commandLine =
+            if (isWindows) {
+                listOf("taskkill.exe", "/F", "/T", "/PID", pid)
+            } else {
+                listOf("kill", pid)
+            }
         standardOutput = killOutput
         errorOutput = killOutput
         isIgnoreExitValue = true
@@ -45,6 +46,8 @@ fun Project.forEachLeakingJavaProcess(action: Action<ProcessInfo>) {
     val (result, pidPattern) =
         if (isWindows) {
             exec {
+                // KTS: ExecSpec members in this block are marked red in IDEA due to
+                // https://github.com/gradle/kotlin-dsl/issues/476
                 commandLine("wmic", "process", "get", "processid,commandline")
                 standardOutput = output
                 errorOutput = error
@@ -52,6 +55,8 @@ fun Project.forEachLeakingJavaProcess(action: Action<ProcessInfo>) {
             } to "([0-9]+)\\s*$".toRegex()
         } else {
             exec {
+                // KTS: ExecSpec members in this block are marked red in IDEA due to
+                // https://github.com/gradle/kotlin-dsl/issues/476
                 commandLine("ps", "x")
                 standardOutput = output
                 errorOutput = output
