@@ -292,25 +292,7 @@ def isMe(process) {
 }
 
 def pkill(pid) {
-    def killOutput = new ByteArrayOutputStream()
-    def result = exec {
-        if (org.gradle.internal.os.OperatingSystem.current().windows) {
-            commandLine = ["taskkill.exe", "/F", "/T", "/PID", pid]
-        } else {
-            commandLine = ["kill", pid]
-        }
-        standardOutput = killOutput
-        errorOutput = killOutput
-        ignoreExitValue = true
-    }
-    if (result.exitValue != 0) {
-        String out = killOutput.toString()
-        if (!out.contains('No such process')) {
-            logger.warn("""Failed to kill daemon process $pid. Maybe already killed?
-Output: ${killOutput}
-""")
-        }
-    }
+    org.gradle.process.Process.pkill(project, pid)
 }
 
 project(":") {
