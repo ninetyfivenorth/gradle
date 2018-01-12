@@ -16,6 +16,7 @@
 
 import org.gradle.cleanup.CleanUpCaches
 import org.gradle.cleanup.CleanUpDaemons
+import org.gradle.process.KillLeakingJavaProcesses
 import org.gradle.testing.DistributionTest
 
 tasks.withType<DistributionTest> {
@@ -35,11 +36,12 @@ tasks.withType<DistributionTest> {
     reports.junitXml.destination = File(the<JavaPluginConvention>().testResultsDir, name)
 
     // use -PtestVersions=all or -PtestVersions=1.2,1.3…
+    val integTestVersionsSysProp = "org.gradle.integtest.versions"
     if (project.hasProperty("testVersions")) {
-        systemProperties["org.gradle.integtest.versions"] = project.property("testVersions")
+        systemProperties[integTestVersionsSysProp] = project.property("testVersions")
     }
-    if ("org.gradle.integtest.versions" !in systemProperties) {
-        systemProperties["org.gradle.integtest.versions"] = "latest"
+    if (integTestVersionsSysProp !in systemProperties) {
+        systemProperties[integTestVersionsSysProp] = "latest"
     }
 
     fun ifProperty(name: String, then: String): String? =
@@ -110,20 +112,21 @@ project(":") {
         return@project
     }
 
-    task<CleanUpCaches>("cleanUpCaches") {
-        dependsOn(":createBuildReceipt")
-    }
-
-    task<CleanUpDaemons>("cleanUpDaemons")
-
     tasks {
 
-        val killExistingProcessesStartedByGradle by creating(org.gradle.process.KillLeakingJavaProcesses::class)
+        "cleanUpCaches"(CleanUpCaches::class) {
+            dependsOn(":createBuildReceipt")
+        }
+
+        "cleanUpDaemons"(CleanUpDaemons::class)
+
+        val killExistingProcessesStartedByGradle by creating(KillLeakingJavaProcesses::class)
 
         val isCiServer: Boolean by rootProject.extra
         if (isCiServer) {
-            val clean by tasks
-            clean.dependsOn(killExistingProcessesStartedByGradle)
+            "clean" {
+                dependsOn(killExistingProcessesStartedByGradle)
+            }
             subprojects {
                 tasks.all {
                     mustRunAfter(killExistingProcessesStartedByGradle)
