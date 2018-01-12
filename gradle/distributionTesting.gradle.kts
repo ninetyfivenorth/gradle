@@ -86,7 +86,7 @@ tasks.withType<DistributionTest> {
                         this.binZip = binZip.archivePath
                     }
 
-                    daemonRegistry = file("$rootProject.buildDir/daemon")
+                    daemonRegistry = file("${rootProject.buildDir}/daemon")
                 }
             }
         })
