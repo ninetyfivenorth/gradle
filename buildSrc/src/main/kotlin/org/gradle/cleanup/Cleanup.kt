@@ -26,6 +26,11 @@ import org.gradle.util.GradleVersion
 
 import java.io.File
 
+
+private
+val dirVersionPattern = "\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?".toRegex()
+
+
 /**
  * Removes state for versions that we're unlikely to ever need again, such as old snapshot versions.
  */
@@ -34,11 +39,12 @@ fun Project.removeOldVersionsFromDir(dir: File, shouldDelete: Spec<GradleVersion
     if (dir.isDirectory) {
 
         for (cacheDir in dir.listFiles()) {
-            if (!cacheDir.name.startsWith(dirPrefix) || !cacheDir.name.endsWith(dirSuffix)) {
+            val cacheDirName = cacheDir.name
+            if (!cacheDirName.startsWith(dirPrefix) || !cacheDirName.endsWith(dirSuffix)) {
                 continue
             }
-            val dirVersion = cacheDir.name.substring(dirPrefix.length, cacheDir.name.length - dirSuffix.length)
-            if (!dirVersion.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?".toRegex())) {
+            val dirVersion = cacheDirName.removePrefix(dirPrefix).removeSuffix(dirSuffix)
+            if (!dirVersion.matches(dirVersionPattern)) {
                 continue
             }
 
@@ -63,19 +69,27 @@ fun Project.removeCachedScripts(cachesDir: File) {
 
     if (cachesDir.isDirectory) {
 
-        for (cacheDir in cachesDir.listFiles()) {
-            if (cacheDir.isDirectory) {
-                listOf("scripts", "scripts-remapped", "gradle-kotlin-dsl", "gradle-kotlin-dsl-accessors").forEach {
-                    val scriptsCacheDir = File(cacheDir, it)
-                    if (scriptsCacheDir.isDirectory) {
-                        println("Removing scripts cache directory : $scriptsCacheDir")
-                        delete(scriptsCacheDir)
-                    }
-                }
+        cachesDir.listFiles()
+            .filter { it.isDirectory }
+            .flatMap { scriptsCacheDirsUnder(it) }
+            .forEach { scriptsCacheDir ->
+                println("Removing scripts cache directory : $scriptsCacheDir")
+                delete(scriptsCacheDir)
             }
-        }
     }
 }
+
+
+private
+val scriptCacheDirNames =
+    listOf("scripts", "scripts-remapped", "gradle-kotlin-dsl", "gradle-kotlin-dsl-accessors")
+
+
+private
+fun scriptsCacheDirsUnder(cacheDir: File) =
+    scriptCacheDirNames
+        .map { File(cacheDir, it) }
+        .filter { it.isDirectory }
 
 
 /**
@@ -86,7 +100,7 @@ fun Project.removeDodgyCacheFiles(dir: File) {
     if (dir.isDirectory) {
 
         for (cacheDir in dir.listFiles()) {
-            if (!cacheDir.name.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?".toRegex())) {
+            if (!cacheDir.name.matches(dirVersionPattern)) {
                 continue
             }
             for (name in listOf("fileHashes", "outputFileStates", "fileSnapshots")) {
@@ -104,7 +118,7 @@ fun Project.removeDodgyCacheFiles(dir: File) {
 /**
  * Clean up daemon log files produced in integration tests.
  */
-fun Project.removeDaemonLogFiles(dir: File ) {
+fun Project.removeDaemonLogFiles(dir: File) {
     if (dir.isDirectory) {
         val daemonLogFiles = fileTree(dir) {
             include("**/*.log")
