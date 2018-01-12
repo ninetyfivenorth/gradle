@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+import org.gradle.cleanup.CleanUpCaches
+import org.gradle.cleanup.CleanUpDaemons
 import org.gradle.testing.DistributionTest
 
 tasks.withType<DistributionTest> {
 
-    val task = this
+    val distributionTest = this
 
     dependsOn(":toolingApi:toolingApiShadedJar")
     dependsOn(":cleanUpCaches")
@@ -30,14 +32,13 @@ tasks.withType<DistributionTest> {
         jvmArgs("-XX:MaxPermSize=768m")
     }
 
-    val javaConvention = the<JavaPluginConvention>()
-    reports.junitXml.destination = File(javaConvention.testResultsDir, name)
+    reports.junitXml.destination = File(the<JavaPluginConvention>().testResultsDir, name)
 
     // use -PtestVersions=all or -PtestVersions=1.2,1.3…
     if (project.hasProperty("testVersions")) {
         systemProperties["org.gradle.integtest.versions"] = project.property("testVersions")
     }
-    if (systemProperties["org.gradle.integtest.versions"] == null) {
+    if ("org.gradle.integtest.versions" !in systemProperties) {
         systemProperties["org.gradle.integtest.versions"] = "latest"
     }
 
@@ -57,12 +58,11 @@ tasks.withType<DistributionTest> {
     }
 
     dependsOn(
-        task("configure${task.name.capitalize()}") {
+        task("configure${distributionTest.name.capitalize()}") {
             doLast {
-                task.apply {
+                distributionTest.apply {
 
-                    val reporting = the<ReportingExtension>()
-                    reports.html.destination = file("${reporting.baseDir}/$name")
+                    reports.html.destination = file("${the<ReportingExtension>().baseDir}/$name")
 
                     val intTestImage: Sync by tasks
                     gradleHomeDir = intTestImage.destinationDir
@@ -77,8 +77,7 @@ tasks.withType<DistributionTest> {
                     }
 
                     if (requiresDists) {
-                        val base = rootProject.the<BasePluginConvention>()
-                        distsDir = base.distsDir
+                        distsDir = rootProject.the<BasePluginConvention>().distsDir
                         systemProperties["integTest.distZipVersion"] = version
                     }
 
@@ -95,7 +94,7 @@ tasks.withType<DistributionTest> {
     lateinit var daemonListener: Any
 
     doFirst {
-        val cleanUpDaemons: org.gradle.cleanup.CleanUpDaemons by rootProject.tasks
+        val cleanUpDaemons: CleanUpDaemons by rootProject.tasks
         daemonListener = cleanUpDaemons.newDaemonListener()
         gradle.addListener(daemonListener)
     }
@@ -111,11 +110,11 @@ project(":") {
         return@project
     }
 
-    task<org.gradle.cleanup.CleanUpCaches>("cleanUpCaches") {
+    task<CleanUpCaches>("cleanUpCaches") {
         dependsOn(":createBuildReceipt")
     }
 
-    task<org.gradle.cleanup.CleanUpDaemons>("cleanUpDaemons")
+    task<CleanUpDaemons>("cleanUpDaemons")
 
     tasks {
 
@@ -137,6 +136,6 @@ project(":") {
 fun collectMirrorUrls(): Map<String, String> =
 // expected env var format: repo1_id:repo1_url,repo2_id:repo2_url,...
     System.getenv("REPO_MIRROR_URLS")?.split(',')?.associate { nameToUrl ->
-            val index = nameToUrl.indexOf(":")
-            nameToUrl.substring(0, index) to nameToUrl.substring(index + 1)
+            val (name, url) = nameToUrl.split(':', limit = 2)
+            name to url
         } ?: emptyMap()
