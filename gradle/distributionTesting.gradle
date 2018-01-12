@@ -75,26 +75,7 @@ tasks.withType(DistributionTest) { DistributionTest task ->
     ext.daemonListener = null
 
     doFirst {
-        def daemonPids = rootProject.cleanUpDaemons.daemonPids
-        def suspiciousDaemons = rootProject.cleanUpDaemons.suspiciousDaemons
-        daemonListener = [
-            beforeTest : { test -> },
-            afterTest  : { test, result -> },
-            beforeSuite: { suite ->
-                forEachJavaProcess { pid, process ->
-                    // processes that exist before the test suite execution should
-                    // not trigger a warning
-                    daemonPids << pid
-                }
-            },
-            afterSuite : { suite, result ->
-                forEachJavaProcess { pid, process ->
-                    if (!daemonPids.contains(pid)) {
-                        daemonPids << pid
-                        suspiciousDaemons."$suite" << pid
-                    }
-                }
-            }] as TestListener
+        daemonListener = rootProject.cleanUpDaemons.newTestListener()
         gradle.addListener(daemonListener)
     }
 
@@ -130,9 +111,13 @@ def pkill(pid) {
 }
 
 project(":") {
+
     if (tasks.findByName('cleanUpDaemons')) {
         return
     }
+
+    task cleanUpDaemons(type: org.gradle.cleanup.CleanUpDaemons)
+
     task killExistingProcessesStartedByGradle {
         doLast {
             def didKill = false
@@ -148,21 +133,6 @@ project(":") {
         }
     }
 
-    task cleanUpDaemons {
-        ext.suspiciousDaemons = [:].withDefault { [].asSynchronized() }.asSynchronized()
-        ext.daemonPids = ([] as Set).asSynchronized()
-        doLast {
-            Set alreadyKilled = []
-            forEachJavaProcess { pid, process ->
-                suspiciousDaemons.each { suite, pids ->
-                    if (pids.contains(pid) && !alreadyKilled.contains(pid)) {
-                        logger.warn("A process was created in $suite but wasn't shutdown properly. Killing PID $pid (Command line: $process)")
-                        pkill(pid)
-                    }
-                }
-            }
-        }
-    }
     if (isCiServer) {
         clean.dependsOn killExistingProcessesStartedByGradle
         subprojects {
