@@ -120,7 +120,7 @@ apply {
         from("$rootDir/gradle/jmh.gradle")
     }
 
-    from("$rootDir/gradle/distributionTesting.gradle")
+    from("$rootDir/gradle/distributionTesting.gradle.kts")
     from("$rootDir/gradle/intTestImage.gradle")
 }
 
