@@ -116,20 +116,7 @@ def collectMirrorUrls() {
  * Clean up cache files for older versions that aren't multi-process safe.
  */
 def removeDodgyCacheFiles(File dir) {
-    if (dir.directory) {
-        for (File cacheDir : dir.listFiles()) {
-            if (!cacheDir.name.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?")) {
-                continue
-            }
-            for (String name : ["fileHashes", "outputFileStates", "fileSnapshots"]) {
-                def stateDir = new File(cacheDir, name)
-                if (stateDir.directory) {
-                    println "Removing old cache directory : ${stateDir}"
-                    delete(stateDir)
-                }
-            }
-        }
-    }
+   org.gradle.cleanup.Cleanup.removeDodgyCacheFiles(project, dir)
 }
 
 

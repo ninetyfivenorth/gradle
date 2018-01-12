@@ -77,3 +77,26 @@ fun Project.removeCachedScripts(cachesDir: File) {
     }
 }
 
+
+/**
+ * Clean up cache files for older versions that aren't multi-process safe.
+ */
+fun Project.removeDodgyCacheFiles(dir: File) {
+
+    if (dir.isDirectory) {
+
+        for (cacheDir in dir.listFiles()) {
+            if (!cacheDir.name.matches("\\d+\\.\\d+(\\.\\d+)?(-\\w+)*(-\\d{14}[+-]\\d{4})?".toRegex())) {
+                continue
+            }
+            for (name in listOf("fileHashes", "outputFileStates", "fileSnapshots")) {
+                val stateDir = File(cacheDir, name)
+                if (stateDir.isDirectory) {
+                    println("Removing old cache directory : $stateDir")
+                    delete(stateDir)
+                }
+            }
+        }
+    }
+}
+
