@@ -119,17 +119,11 @@ def removeDodgyCacheFiles(File dir) {
    org.gradle.cleanup.Cleanup.removeDodgyCacheFiles(project, dir)
 }
 
-
 /**
  * Clean up daemon log files produced in integration tests.
  */
 def removeDaemonLogFiles(File dir) {
-    if (dir.directory) {
-        def daemonLogFiles = fileTree(dir) {
-            include '**/*.log'
-        }
-        delete daemonLogFiles
-    }
+    org.gradle.cleanup.Cleanup.removeDaemonLogFiles(project, dir)
 }
 
 /**

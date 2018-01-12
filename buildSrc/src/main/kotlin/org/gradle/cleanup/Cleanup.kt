@@ -100,3 +100,16 @@ fun Project.removeDodgyCacheFiles(dir: File) {
     }
 }
 
+
+/**
+ * Clean up daemon log files produced in integration tests.
+ */
+fun Project.removeDaemonLogFiles(dir: File ) {
+    if (dir.isDirectory) {
+        val daemonLogFiles = fileTree(dir) {
+            include("**/*.log")
+        }
+        delete(daemonLogFiles)
+    }
+}
+
