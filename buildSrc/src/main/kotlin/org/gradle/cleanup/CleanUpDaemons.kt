@@ -51,7 +51,8 @@ open class CleanUpDaemons : DefaultTask() {
         }
     }
 
-    fun newTestListener() =
+    fun newDaemonListener() =
+
         object : TestListener {
             override fun beforeTest(test: TestDescriptor) = Unit
             override fun afterTest(test: TestDescriptor, result: TestResult) = Unit

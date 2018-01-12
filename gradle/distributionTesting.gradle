@@ -77,7 +77,7 @@ tasks.withType(DistributionTest) { DistributionTest task ->
     def daemonListener = null
 
     doFirst {
-        daemonListener = rootProject.cleanUpDaemons.newTestListener()
+        daemonListener = rootProject.cleanUpDaemons.newDaemonListener()
         gradle.addListener(daemonListener)
     }
 
