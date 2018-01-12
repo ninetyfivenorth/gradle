@@ -102,13 +102,6 @@ project(":") {
     task cleanUpCaches(type: org.gradle.cleanup.CleanUpCaches) {
         dependsOn(":createBuildReceipt")
     }
-}
-
-project(":") {
-
-    if (tasks.findByName("cleanUpDaemons")) {
-        return
-    }
 
     task cleanUpDaemons(type: org.gradle.cleanup.CleanUpDaemons)
 
