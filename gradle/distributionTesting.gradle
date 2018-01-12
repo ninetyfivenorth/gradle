@@ -74,7 +74,7 @@ tasks.withType(DistributionTest) { DistributionTest task ->
         }
     }
 
-    ext.daemonListener = null
+    def daemonListener = null
 
     doFirst {
         daemonListener = rootProject.cleanUpDaemons.newTestListener()
