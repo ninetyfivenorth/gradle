@@ -74,9 +74,7 @@ testTasks.all {
         if (this is DistributionTest) {
             ciProperties.keys.forEach { ignoreSystemProperty(it) }
         } else {
-            inputs.property("systemProperties", object : Callable<Any> {
-                override fun call() = systemProperties - ciProperties
-            })
+            inputs.property("systemProperties", Callable<Any> { systemProperties - ciProperties })
         }
     }
     executable = Jvm.forHome(javaInstallationForTest.javaHome).javaExecutable.absolutePath
