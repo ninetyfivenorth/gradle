@@ -86,15 +86,8 @@ tasks.withType(DistributionTest) { DistributionTest task ->
     }
 }
 
-def collectMirrorUrls() {
-    // expected env var format: repo1_id:repo1_url,repo2_id:repo2_url,...
-    System.getenv("REPO_MIRROR_URLS")?.split(",")?.collectEntries { nameToUrl ->
-        def index = nameToUrl.indexOf(":")
-        [(nameToUrl.substring(0, index)) : nameToUrl.substring(index + 1)]
-    } ?: [:]
-}
-
 project(":") {
+
     if (tasks.findByName("cleanUpCaches")) {
         return
     }
@@ -116,3 +109,12 @@ project(":") {
         }
     }
 }
+
+def collectMirrorUrls() {
+    // expected env var format: repo1_id:repo1_url,repo2_id:repo2_url,...
+    System.getenv("REPO_MIRROR_URLS")?.split(",")?.collectEntries { nameToUrl ->
+        def index = nameToUrl.indexOf(":")
+        [(nameToUrl.substring(0, index)) : nameToUrl.substring(index + 1)]
+    } ?: [:]
+}
+
