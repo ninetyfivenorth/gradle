@@ -261,6 +261,36 @@ class ComponentAttributeMatcherTest extends Specification {
         matches == [candidate2]
     }
 
+    def "ignores extra attributes if match is found after disambiguation requested attributes"() {
+        def key1 = Attribute.of("a1", String)
+        schema.attribute(key1)
+        schema.accept(key1, "foo", "bar")
+        schema.accept(key1, "foo", "baz")
+        schema.prefer(key1, "baz")
+
+        def key2 = Attribute.of("a2", String)
+        schema.attribute(key2)
+        schema.prefer(key2, "ignored1")
+
+        given:
+        def candidate1 = attributes()
+        candidate1.attribute(key1, "bar")
+        candidate1.attribute(key2, "ignored1")
+
+        def candidate2 = attributes()
+        candidate2.attribute(key1, "baz")
+        candidate2.attribute(key2, "ignored2")
+
+        def requested = attributes()
+        requested.attribute(key1, "foo")
+
+        expect:
+        def matcher = new ComponentAttributeMatcher()
+
+        def matches = matcher.match(schema, [candidate1, candidate2], requested, null)
+        matches == [candidate2]
+    }
+
     def "empty producer attributes match any consumer attributes"() {
         given:
         def key1 = Attribute.of("a1", String)

@@ -17,7 +17,6 @@
 package org.gradle.api.internal.attributes;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.gradle.api.Action;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributeMatchingStrategy;
@@ -41,12 +40,7 @@ import java.util.Set;
 public class DefaultAttributesSchema implements AttributesSchemaInternal, AttributesSchema {
     private final ComponentAttributeMatcher componentAttributeMatcher;
     private final InstantiatorFactory instantiatorFactory;
-    /**
-     * TODO we currently keep the attributes in declaration order, so that matching error messages
-     * are always the same, no matter which machine the build is run on. We might want to reconsider
-     * this, as it adds some additional cost for very little benefit.
-     */
-    private final Map<Attribute<?>, AttributeMatchingStrategy<?>> strategies = Maps.newLinkedHashMap();
+    private final Map<Attribute<?>, AttributeMatchingStrategy<?>> strategies = Maps.newHashMap();
     private final DefaultAttributeMatcher matcher;
 
     public DefaultAttributesSchema(ComponentAttributeMatcher componentAttributeMatcher, InstantiatorFactory instantiatorFactory) {
@@ -226,11 +220,6 @@ public class DefaultAttributesSchema implements AttributesSchemaInternal, Attrib
             }
 
             return false;
-        }
-
-        @Override
-        public Set<Attribute<?>> getAttributes() {
-            return Sets.union(DefaultAttributesSchema.this.getAttributes(), producerSchema.getAttributes());
         }
     }
 }
